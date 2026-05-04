@@ -1,0 +1,1594 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8" />
+  <title>Goalpost — OKR Tool</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg:#fff;--bg-2:#fafaf7;--bg-3:#f3f3ee;--line:#e6e6e0;--line-strong:#d4d4cc;
+      --ink:#14181a;--ink-2:#4a504e;--ink-3:#8a8f8c;--ink-4:#b8bcb8;
+      --accent:oklch(0.42 0.09 155);--accent-soft:oklch(0.95 0.03 155);--accent-ink:oklch(0.32 0.08 155);
+      --warn:oklch(0.62 0.13 60);--warn-soft:oklch(0.96 0.04 75);--warn-ink:oklch(0.45 0.12 55);
+      --red:#c95252;--red-soft:#fdf2f2;
+      --shadow:0 1px 3px rgba(20,24,26,.06),0 1px 0 rgba(20,24,26,.02);
+      --r:6px;--r-md:10px;--r-lg:14px;
+      --font:"Inter",-apple-system,BlinkMacSystemFont,system-ui,sans-serif;
+      --mono:"JetBrains Mono",ui-monospace,monospace;
+    }
+    [data-theme="dark"] {
+      --bg:#0e1110;--bg-2:#14181a;--bg-3:#1c2122;--line:#262c2c;--line-strong:#353c3b;
+      --ink:#ecefed;--ink-2:#b6bcb8;--ink-3:#7d837f;--ink-4:#4d524f;
+      --accent:oklch(0.72 0.11 155);--accent-soft:oklch(0.24 0.05 155);--accent-ink:oklch(0.86 0.08 155);
+      --warn:oklch(0.78 0.12 70);--warn-soft:oklch(0.26 0.05 70);--warn-ink:oklch(0.82 0.1 68);
+      --red:#e07070;--red-soft:#1f1414;
+      --shadow:0 1px 3px rgba(0,0,0,.3),0 1px 0 rgba(0,0,0,.2);
+    }
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{height:100%;font-family:var(--font);background:var(--bg);color:var(--ink);font-size:13px;line-height:1.45;-webkit-font-smoothing:antialiased;font-feature-settings:"ss01","cv11";}
+    #root{height:100%;}
+    button{font-family:var(--font);cursor:pointer;}
+    input,textarea,select{font-family:var(--font);}
+    ::-webkit-scrollbar{width:5px;height:5px;}
+    ::-webkit-scrollbar-track{background:transparent;}
+    ::-webkit-scrollbar-thumb{background:var(--line-strong);border-radius:3px;}
+    .app{display:flex;height:100vh;overflow:hidden;}
+    /* Sidebar */
+    .sidebar{width:214px;flex-shrink:0;background:var(--bg-2);border-right:1px solid var(--line);display:flex;flex-direction:column;padding:14px 10px 10px;overflow:hidden;}
+    .brand{display:flex;align-items:center;gap:8px;padding:4px 8px 18px;font-weight:600;font-size:14px;letter-spacing:-.2px;}
+    .brand-mark{width:18px;height:18px;border-radius:5px;background:var(--accent);position:relative;flex-shrink:0;}
+    .brand-mark::after{content:"";position:absolute;inset:5px;border:1.5px solid white;border-right:none;border-bottom:none;border-radius:1px;}
+    .nav-section{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);padding:14px 10px 6px;}
+    .nav-item{display:flex;align-items:center;gap:9px;padding:6px 10px;border-radius:var(--r);color:var(--ink-2);font-size:13px;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;}
+    .nav-item:hover{background:var(--bg-3);}
+    .nav-item.active{background:var(--bg-3);color:var(--ink);font-weight:500;}
+    .nav-icon{width:14px;height:14px;border:1.2px solid currentColor;border-radius:3px;opacity:.6;flex-shrink:0;}
+    .nav-icon.rd{border-radius:50%;}
+    .nav-badge{margin-left:auto;font-size:11px;background:var(--accent-soft);color:var(--accent-ink);padding:1px 6px;border-radius:8px;}
+    .nav-badge.red{background:var(--red-soft);color:var(--red);}
+    .nav-sp{flex:1;}
+    .view-item{display:flex;align-items:center;gap:6px;padding:5px 10px;border-radius:var(--r);color:var(--ink-3);font-size:12px;cursor:pointer;transition:background .1s;border:none;background:none;width:100%;text-align:left;}
+    .view-item:hover{background:var(--bg-3);color:var(--ink-2);}
+    .view-item.active{background:var(--bg-3);color:var(--accent-ink);font-weight:500;}
+    .view-dot{width:5px;height:5px;border-radius:50%;background:var(--accent);flex-shrink:0;}
+    /* Main */
+    .main{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden;}
+    .topbar{height:48px;flex-shrink:0;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 20px;gap:12px;}
+    .crumb{color:var(--ink-3);font-size:12px;}
+    .crumb b{color:var(--ink);font-weight:500;}
+    .tb-sp{flex:1;}
+    .search-wrap{flex:1;max-width:300px;height:28px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;padding:0 10px;gap:6px;}
+    .search-wrap input{border:none;outline:none;background:transparent;font-size:12px;color:var(--ink);flex:1;min-width:0;}
+    .search-wrap input::placeholder{color:var(--ink-3);}
+    .icon-btn{width:30px;height:30px;border-radius:var(--r);background:var(--bg-2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:14px;flex-shrink:0;position:relative;}
+    .icon-btn:hover{background:var(--bg-3);}
+    .icon-btn .badge{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;background:var(--red);color:#fff;border-radius:8px;font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 3px;}
+    .content{flex:1;overflow:auto;padding:24px 28px;}
+    /* Primitives */
+    .h1{font-size:22px;font-weight:600;letter-spacing:-.4px;}
+    .sub{color:var(--ink-3);font-size:13px;margin-top:3px;}
+    .card{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:16px;box-shadow:var(--shadow);}
+    .btn{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 13px;border-radius:var(--r);border:1px solid var(--line-strong);background:var(--bg);color:var(--ink);font-size:12px;font-weight:500;cursor:pointer;white-space:nowrap;transition:background .1s;}
+    .btn:hover{background:var(--bg-2);}
+    .btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;}
+    [data-theme="dark"] .btn.primary{color:var(--bg);}
+    .btn.primary:hover{opacity:.9;}
+    .btn.ghost{border-color:transparent;background:transparent;color:var(--ink-2);}
+    .btn.ghost:hover{background:var(--bg-2);}
+    .btn.sm{height:26px;padding:0 10px;font-size:11px;}
+    .btn.warn-btn{background:var(--warn-soft);border-color:var(--warn);color:var(--warn-ink);}
+    .btn.danger{background:var(--red-soft);border-color:var(--red);color:var(--red);}
+    .pill{display:inline-flex;align-items:center;gap:5px;height:20px;padding:0 8px;border-radius:10px;background:var(--bg-3);color:var(--ink-2);font-size:11px;font-weight:500;white-space:nowrap;flex-shrink:0;}
+    .pill.green{background:var(--accent-soft);color:var(--accent-ink);}
+    .pill.warn{background:var(--warn-soft);color:var(--warn-ink);}
+    .pill.red{background:var(--red-soft);color:var(--red);}
+    .pill .dot{width:6px;height:6px;border-radius:50%;background:currentColor;flex-shrink:0;}
+    .prog{height:4px;background:var(--bg-3);border-radius:4px;overflow:hidden;flex-shrink:0;}
+    .prog-fill{height:100%;border-radius:4px;transition:width .3s;}
+    .divider{height:1px;background:var(--line);margin:14px 0;}
+    .label{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:500;display:block;margin-bottom:6px;}
+    .inp{height:32px;padding:0 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);font-size:13px;width:100%;outline:none;transition:border-color .15s;}
+    .inp:focus{border-color:var(--accent);}
+    .inp.lg{height:44px;font-size:15px;padding:0 14px;}
+    .ta{padding:8px 10px;border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--ink);font-size:13px;width:100%;outline:none;resize:vertical;min-height:72px;}
+    .ta:focus{border-color:var(--accent);}
+    /* Avatar */
+    .av{border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:600;flex-shrink:0;font-size:10px;}
+    /* KR rows */
+    .obj-group{margin-bottom:26px;}
+    .obj-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+    .obj-tag{font-size:10px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink-3);flex-shrink:0;}
+    .obj-title{font-weight:600;font-size:14px;flex:1;min-width:0;}
+    .kr-list{padding-left:14px;border-left:2px solid var(--line);display:flex;flex-direction:column;gap:6px;}
+    .kr-row{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);padding:11px 14px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:border-color .15s,box-shadow .15s;box-shadow:var(--shadow);}
+    .kr-row:hover{border-color:var(--line-strong);box-shadow:0 2px 8px rgba(20,24,26,.08);}
+    .kr-row.flagged{border-left-width:3px;}
+    .kr-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+    .kr-title-wrap{flex:1;min-width:0;}
+    .kr-meta{font-size:11px;color:var(--ink-3);margin-top:2px;}
+    /* Drawer */
+    .overlay{position:fixed;inset:0;background:rgba(20,24,26,.16);z-index:40;backdrop-filter:blur(1px);}
+    .drawer{position:fixed;top:0;right:0;bottom:0;width:480px;max-width:95vw;background:var(--bg);border-left:1px solid var(--line);display:flex;flex-direction:column;z-index:50;box-shadow:-4px 0 24px rgba(20,24,26,.1);}
+    .drawer-hd{padding:18px 22px 14px;border-bottom:1px solid var(--line);flex-shrink:0;}
+    .drawer-body{flex:1;overflow:auto;padding:18px 22px;}
+    .drawer-close{position:absolute;top:12px;right:16px;width:26px;height:26px;border-radius:var(--r);border:none;background:transparent;font-size:16px;color:var(--ink-3);display:flex;align-items:center;justify-content:center;}
+    .drawer-close:hover{background:var(--bg-2);color:var(--ink);}
+    /* Notif panel */
+    .notif-panel{position:fixed;top:48px;right:0;width:360px;max-height:calc(100vh - 48px);background:var(--bg);border-left:1px solid var(--line);border-bottom:1px solid var(--line);display:flex;flex-direction:column;z-index:60;box-shadow:-4px 4px 24px rgba(20,24,26,.1);}
+    .notif-hd{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px;flex-shrink:0;}
+    .notif-list{flex:1;overflow:auto;}
+    .notif-item{padding:12px 16px;border-bottom:1px solid var(--line);cursor:pointer;display:flex;gap:10px;transition:background .1s;}
+    .notif-item:hover{background:var(--bg-2);}
+    .notif-item.unread{background:var(--accent-soft);}
+    .notif-item.unread:hover{background:oklch(0.93 0.04 155);}
+    .notif-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px;}
+    /* Filter bar */
+    .filter-bar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;padding:10px 0 14px;border-bottom:1px solid var(--line);margin-bottom:20px;}
+    .filter-label-sm{font-size:11px;color:var(--ink-3);text-transform:uppercase;letter-spacing:.06em;flex-shrink:0;}
+    .chip{display:inline-flex;align-items:center;gap:4px;height:26px;padding:0 10px;border-radius:13px;background:var(--bg-2);border:1px solid var(--line);color:var(--ink-2);font-size:11px;cursor:pointer;transition:all .1s;white-space:nowrap;}
+    .chip:hover{border-color:var(--line-strong);background:var(--bg-3);}
+    .chip.on{background:var(--accent-soft);border-color:transparent;color:var(--accent-ink);font-weight:500;}
+    .chip-lbl{color:var(--ink-3);font-size:10px;}
+    .chip.on .chip-lbl{color:var(--accent-ink);opacity:.7;}
+    /* Tabs */
+    .tabs{display:flex;border-bottom:1px solid var(--line);margin-bottom:20px;}
+    .tab{padding:10px 16px;font-size:13px;color:var(--ink-3);cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap;}
+    .tab.active{color:var(--ink);font-weight:500;border-bottom-color:var(--accent);}
+    /* Wizard */
+    .wizard{display:flex;flex:1;overflow:hidden;}
+    .wizard-rail{width:220px;flex-shrink:0;padding:28px 16px;border-right:1px solid var(--line);overflow:auto;}
+    .wizard-main{flex:1;padding:40px 44px;display:flex;flex-direction:column;overflow:auto;}
+    .wizard-preview{width:232px;flex-shrink:0;padding:28px 18px;border-left:1px solid var(--line);background:var(--bg-2);overflow:auto;}
+    .wstep{display:flex;align-items:flex-start;gap:10px;padding:7px 6px;cursor:pointer;border-radius:var(--r);transition:background .1s;}
+    .wstep:hover{background:var(--bg-2);}
+    .wstep.active{background:var(--bg-2);}
+    .wnum{width:18px;height:18px;border-radius:50%;flex-shrink:0;margin-top:1px;border:1.5px solid var(--line-strong);display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--ink-3);}
+    .wnum.done{background:var(--accent);border-color:var(--accent);color:#fff;}
+    .wnum.cur{border-color:var(--accent);color:var(--accent-ink);}
+    /* Mode toggle */
+    .mode-tog{display:inline-flex;border:1px solid var(--line);border-radius:var(--r);padding:2px;background:var(--bg-2);}
+    .mode-btn{height:22px;padding:0 11px;font-size:11px;border:none;background:transparent;border-radius:4px;color:var(--ink-3);font-weight:400;cursor:pointer;}
+    .mode-btn.on{background:var(--bg);color:var(--ink);font-weight:600;}
+    /* Hint boxes */
+    .hint{display:flex;gap:10px;padding:10px 12px;border-radius:var(--r);}
+    .hint.green{background:var(--accent-soft);}
+    .hint.warn{background:var(--warn-soft);border-left:3px solid var(--warn);}
+    .hint-tag{font-family:var(--mono);font-size:11px;margin-top:1px;flex-shrink:0;}
+    /* Today */
+    .today-wrap{max-width:680px;margin:0 auto;padding:32px 0;}
+    .action-card{padding:18px;margin-bottom:10px;border-radius:var(--r-md);background:var(--bg);border:1px solid var(--line);box-shadow:var(--shadow);}
+    .action-card.ac-green{border-left:3px solid var(--accent);}
+    .action-card.ac-warn{background:var(--warn-soft);border-color:transparent;}
+    .quiet-item{display:flex;align-items:center;gap:10px;padding:8px 4px;border-bottom:1px solid var(--line);cursor:pointer;}
+    .quiet-item:hover{background:var(--bg-2);}
+    /* User switcher */
+    .user-switcher{position:relative;}
+    .user-btn{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:var(--r);width:100%;border:none;background:transparent;cursor:pointer;color:var(--ink-2);font-size:12px;text-align:left;}
+    .user-btn:hover{background:var(--bg-3);}
+    .user-menu{position:absolute;bottom:calc(100% + 4px);left:0;right:0;background:var(--bg);border:1px solid var(--line);border-radius:var(--r-md);box-shadow:0 4px 16px rgba(20,24,26,.12);z-index:100;overflow:hidden;}
+    .user-menu-item{display:flex;align-items:center;gap:8px;padding:8px 12px;cursor:pointer;font-size:12px;color:var(--ink-2);border:none;background:none;width:100%;text-align:left;}
+    .user-menu-item:hover{background:var(--bg-2);color:var(--ink);}
+    .user-menu-item.current{background:var(--accent-soft);color:var(--accent-ink);}
+    /* Modal */
+    .modal-overlay{position:fixed;inset:0;background:rgba(20,24,26,.3);z-index:80;display:flex;align-items:center;justify-content:center;}
+    .modal{background:var(--bg);border:1px solid var(--line);border-radius:var(--r-lg);padding:24px;width:360px;box-shadow:0 8px 32px rgba(20,24,26,.16);}
+    /* Misc */
+    .status-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;}
+    .status-opt{border:1px solid var(--line);background:var(--bg);border-radius:var(--r);padding:10px 6px;text-align:center;cursor:pointer;font-size:12px;color:var(--ink-2);transition:all .1s;}
+    .status-opt:hover{background:var(--bg-2);}
+    .status-opt.sel{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:600;}
+    .status-opt.sel.risk{border-color:var(--warn);background:var(--warn-soft);color:var(--warn-ink);}
+    .status-opt.sel.off{border-color:var(--red);background:var(--red-soft);color:var(--red);}
+    .stat-block{display:flex;flex-direction:column;gap:2px;}
+    .stat-lbl{font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);}
+    .stat-val{font-size:13px;color:var(--ink);font-weight:500;}
+    .fade{animation:fade .15s ease;}
+    @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+    .row{display:flex;align-items:center;gap:10px;}
+    .g{display:grid;gap:14px;}
+    .empty{color:var(--ink-3);font-size:14px;text-align:center;padding:48px 0;}
+    [data-theme="dark"] .btn.primary{color:var(--bg-2);}
+  </style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback, useMemo } = React;
+
+/* ═══════════════════════════════ CONFIG ═══════════════════════════════ */
+const USERS = {
+  jamie: { id:'jamie', name:'Jamie L.', initials:'JL', role:'CEO / OKR Champion', color:'#2d6a4f' },
+  maya:  { id:'maya',  name:'Maya P.',  initials:'MP', role:'VP Product',          color:'#1e6091' },
+  ana:   { id:'ana',   name:'Ana R.',   initials:'AR', role:'Senior Designer',      color:'#6a2d4f' },
+  david: { id:'david', name:'David K.', initials:'DK', role:'Engineering Lead',     color:'#2d4a6a' },
+  marcus:{ id:'marcus',name:'Marcus S.',initials:'MS', role:'Sales Lead',           color:'#6a4f2d' },
+  luke:  { id:'luke',  name:'Luke T.',  initials:'LT', role:'Head of Support',      color:'#4f6a2d' },
+  sarah: { id:'sarah', name:'Sarah T.', initials:'ST', role:'CTO',                  color:'#6a2d2d' },
+};
+
+const OBJECTIVES = [
+  { id:'obj-1', title:'Make first-week experience effortless',          team:'Product' },
+  { id:'obj-2', title:'Become the most reliable platform in our category', team:'Engineering' },
+  { id:'obj-3', title:'Build pipeline for H2 enterprise push',          team:'Sales' },
+];
+
+const genId = () => Math.random().toString(36).slice(2, 10);
+
+/* ════════════════════════════ INITIAL DATA ════════════════════════════ */
+const INITIAL_KRS = [
+  { id:'kr-1', objectiveId:'obj-1', title:'Cut onboarding time in half by July',
+    ownerId:'jamie', signOffPersonId:'maya', beneficiary:'New users',
+    outcome:'Median setup time drops from 18 min to 9 min',
+    type:'numeric', unit:'min', direction:'dec',
+    baselineNum:18, targetNum:9, currentNum:14,
+    pct:57, displayCurrent:'14 min', displayBaseline:'18 min', displayTarget:'9 min',
+    period:'Q2 2026', tags:['onboarding','activation'],
+    status:'on', approvalState:'active',
+    lastCheckin:'9 days ago', checkinDue:true, systemFlag:null,
+    note:'In progress — caching layer helps',
+    statusHistory:[
+      { date:'May 1', status:'on',   note:'Back on track after sprint fix' },
+      { date:'Apr 22',status:'risk', note:'Slipped — sprint deprioritised' },
+      { date:'Apr 1', status:'on',   note:'KR activated' },
+    ] },
+  { id:'kr-2', objectiveId:'obj-1', title:'Reduce setup support tickets by 40%',
+    ownerId:'ana', signOffPersonId:'luke', beneficiary:'Luke T. — Head of Support',
+    outcome:'Monthly setup tickets fall from 220 to 132, confirmed by Luke T.',
+    type:'numeric', unit:'tickets/mo', direction:'dec',
+    baselineNum:220, targetNum:132, currentNum:178,
+    pct:48, displayCurrent:'178/mo', displayBaseline:'220/mo', displayTarget:'132/mo',
+    period:'Q2 2026', tags:['onboarding','support'],
+    status:'on', approvalState:'pending-signoff',
+    lastCheckin:'2 days ago', checkinDue:false, systemFlag:null,
+    note:null, statusHistory:[] },
+  { id:'kr-3', objectiveId:'obj-1', title:'Ship guided product tour to 100% of new users',
+    ownerId:'jamie', signOffPersonId:'maya', beneficiary:'New users',
+    outcome:'All new users complete the guided tour in their first session',
+    type:'binary', unit:null, direction:null,
+    baselineNum:0, targetNum:100, currentNum:30,
+    pct:30, displayCurrent:'30% reach', displayBaseline:'0%', displayTarget:'100%',
+    period:'Q2 2026', tags:['onboarding'],
+    status:'risk', approvalState:'active',
+    lastCheckin:'4 days ago', checkinDue:false, systemFlag:'Behind pace',
+    note:'Engineering deprioritised the tour sprint',
+    statusHistory:[
+      { date:'Apr 29', status:'risk', note:'Sprint deprioritised' },
+      { date:'Apr 1',  status:'on',   note:'KR activated' },
+    ] },
+  { id:'kr-4', objectiveId:'obj-2', title:'Reduce p95 API latency under 200ms',
+    ownerId:'david', signOffPersonId:'sarah', beneficiary:'All customers',
+    outcome:'p95 API response stays consistently under 200ms throughout Q2',
+    type:'numeric', unit:'ms', direction:'dec',
+    baselineNum:340, targetNum:200, currentNum:225,
+    pct:44, displayCurrent:'225ms', displayBaseline:'340ms', displayTarget:'200ms',
+    period:'Q2 2026', tags:['infrastructure','performance'],
+    status:'risk', approvalState:'active',
+    lastCheckin:'1 day ago', checkinDue:false, systemFlag:'System flagged at risk',
+    note:'Caching rollout slipped a sprint. Fix lands week of May 11.',
+    statusHistory:[
+      { date:'May 2', status:'risk', note:'System flagged — behind pace' },
+      { date:'Apr 15',status:'on',   note:'Initial check-in' },
+    ] },
+  { id:'kr-5', objectiveId:'obj-2', title:'Achieve 99.95% uptime across Q2',
+    ownerId:'david', signOffPersonId:'sarah', beneficiary:'All customers',
+    outcome:'Uptime remains at or above 99.95% throughout Q2',
+    type:'threshold-above', unit:'%', direction:'inc',
+    baselineNum:99.8, targetNum:99.95, currentNum:99.97,
+    pct:80, displayCurrent:'99.97%', displayBaseline:'99.8%', displayTarget:'99.95%',
+    period:'Q2 2026', tags:['infrastructure'],
+    status:'on', approvalState:'active',
+    lastCheckin:'3 days ago', checkinDue:false, systemFlag:null,
+    note:null, statusHistory:[{ date:'Apr 20', status:'on', note:'On track' }] },
+  { id:'kr-6', objectiveId:'obj-3', title:'Close 12 enterprise pilots by June 30',
+    ownerId:'marcus', signOffPersonId:'jamie', beneficiary:'Jamie L. — CEO',
+    outcome:'12 signed enterprise pilots closed, confirmed by Jamie L.',
+    type:'numeric', unit:'pilots', direction:'inc',
+    baselineNum:0, targetNum:12, currentNum:2,
+    pct:17, displayCurrent:'2 pilots', displayBaseline:'0', displayTarget:'12',
+    period:'Q2 2026', tags:['enterprise','sales'],
+    status:'off', approvalState:'pending-signoff',
+    lastCheckin:'5 days ago', checkinDue:false, systemFlag:null,
+    note:null, statusHistory:[] },
+  { id:'kr-7', objectiveId:'obj-3', title:'Stand up dedicated solutions engineering function',
+    ownerId:'marcus', signOffPersonId:'jamie', beneficiary:'Enterprise customers',
+    outcome:'SE team operational with 4 hires and process in place, confirmed by Jamie L.',
+    type:'binary', unit:null, direction:null,
+    baselineNum:0, targetNum:100, currentNum:75,
+    pct:60, displayCurrent:'3 of 4 hires', displayBaseline:'Not started', displayTarget:'Team operational',
+    period:'Q2 2026', tags:['enterprise','hiring'],
+    status:'on', approvalState:'active',
+    lastCheckin:'2 days ago', checkinDue:false, systemFlag:null,
+    note:null, statusHistory:[] },
+];
+
+const INITIAL_NOTIFS = [
+  { id:'n1', userId:'jamie', type:'signoff_request', krId:'kr-6', read:false, ts:Date.now()-172800000,
+    message:'Marcus S. listed you as value recipient for "Close 12 enterprise pilots by June 30"' },
+  { id:'n2', userId:'jamie', type:'checkin_due', krId:'kr-1', read:false, ts:Date.now()-86400000,
+    message:'Check-in is 9 days overdue on "Cut onboarding time in half by July"' },
+  { id:'n3', userId:'luke', type:'signoff_request', krId:'kr-2', read:false, ts:Date.now()-259200000,
+    message:'Ana R. listed you as value recipient for "Reduce setup support tickets by 40%"' },
+  { id:'n4', userId:'david', type:'at_risk', krId:'kr-4', read:true, ts:Date.now()-86400000,
+    message:'System flagged "Reduce p95 API latency under 200ms" as At Risk' },
+  { id:'n5', userId:'marcus', type:'awaiting', krId:'kr-6', read:false, ts:Date.now()-172800000,
+    message:'"Close 12 enterprise pilots" is awaiting Jamie L.\'s sign-off' },
+  { id:'n6', userId:'marcus', type:'awaiting', krId:'kr-7', read:true, ts:Date.now()-604800000,
+    message:'"Stand up solutions engineering" was approved by Jamie L. — now active' },
+  { id:'n7', userId:'sarah', type:'signoff_request', krId:'kr-4', read:true, ts:Date.now()-1209600000,
+    message:'David K. listed you as value recipient for "Reduce p95 API latency under 200ms"' },
+  { id:'n8', userId:'sarah', type:'signoff_request', krId:'kr-5', read:true, ts:Date.now()-1209600000,
+    message:'David K. listed you as value recipient for "Achieve 99.95% uptime across Q2"' },
+  { id:'n9', userId:'ana', type:'awaiting', krId:'kr-2', read:false, ts:Date.now()-259200000,
+    message:'"Reduce setup support tickets by 40%" is awaiting Luke T.\'s sign-off' },
+];
+
+const INITIAL_SAVED_VIEWS = [
+  { id:'sv1', name:'At risk this quarter', filters:{ status:'risk', period:'Q2 2026' } },
+  { id:'sv2', name:'Enterprise pipeline',  filters:{ tag:'enterprise' } },
+];
+
+/* ═══════════════════════════════ HOOKS ════════════════════════════════ */
+const useLocalStorage = (key, init) => {
+  const [state, setState] = useState(() => {
+    try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : init; }
+    catch { return init; }
+  });
+  const set = useCallback((valOrFn) => {
+    setState(prev => {
+      const next = typeof valOrFn === 'function' ? valOrFn(prev) : valOrFn;
+      try { localStorage.setItem(key, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  }, [key]);
+  return [state, set];
+};
+
+/* ═══════════════════════════════ UTILS ════════════════════════════════ */
+const statusColor  = s => s==='on'?'var(--accent)':s==='risk'?'var(--warn)':s==='off'?'var(--red)':'var(--ink-4)';
+const statusLabel  = s => s==='on'?'On Track':s==='risk'?'At Risk':s==='off'?'Missed':s==='achieved'?'Achieved':s==='deferred'?'Deferred':'—';
+const pillClass    = s => s==='on'?'green':s==='risk'?'warn':s==='off'?'red':'';
+const timeAgo = ts => { const d=Date.now()-ts,m=Math.floor(d/60000),h=Math.floor(d/3600000),dy=Math.floor(d/86400000); if(m<1)return'just now';if(m<60)return m+'m ago';if(h<24)return h+'h ago';return dy+'d ago'; };
+const notifIcon = t => t==='approved'?'✓':t==='rejected'?'↩':t==='at_risk'?'⚠':t==='checkin_due'?'!':t==='checkin'?'↺':'◉';
+const notifColor = t => t==='approved'?'var(--accent-soft)':t==='rejected'||t==='at_risk'||t==='checkin_due'?'var(--warn-soft)':'var(--bg-3)';
+
+const calcPct = (kr, newVal) => {
+  const v = parseFloat(newVal);
+  if (isNaN(v)) return kr.pct;
+  if (kr.direction === 'dec') return Math.round(Math.max(0,Math.min(100,(kr.baselineNum-v)/(kr.baselineNum-kr.targetNum)*100)));
+  if (kr.direction === 'inc') return Math.round(Math.max(0,Math.min(100,(v-kr.baselineNum)/(kr.targetNum-kr.baselineNum)*100)));
+  return kr.pct;
+};
+
+const applyFilters = (allKrs, filters, userId) => {
+  let r = allKrs.filter(k => k.approvalState !== 'deleted');
+  const ownerFilter = filters.owner || 'me';
+  if (ownerFilter === 'me') r = r.filter(k => k.ownerId === userId);
+  else if (ownerFilter !== 'all') r = r.filter(k => k.ownerId === ownerFilter);
+  if (filters.period && filters.period !== 'all') r = r.filter(k => k.period === filters.period);
+  if (filters.tag && filters.tag !== 'all') r = r.filter(k => (k.tags||[]).includes(filters.tag));
+  if (filters.team && filters.team !== 'all') r = r.filter(k => k.objectiveId === filters.team);
+  if (filters.status && filters.status !== 'all') r = r.filter(k => k.status === filters.status);
+  return r;
+};
+
+const groupByObj = (krs, allKrs) =>
+  OBJECTIVES.map(o => {
+    const rows = krs.filter(k => k.objectiveId === o.id);
+    const allInObj = allKrs.filter(k => k.objectiveId === o.id && k.approvalState === 'active');
+    const pct = allInObj.length ? Math.round(allInObj.reduce((s,k)=>s+k.pct,0)/allInObj.length) : 0;
+    return { ...o, krs: rows, pct };
+  }).filter(o => o.krs.length > 0);
+
+const allTags = krs => [...new Set(krs.flatMap(k => k.tags||[]))].sort();
+
+/* ══════════════════════════ PRIMITIVE COMPONENTS ══════════════════════ */
+const Avatar = ({ uid, size=22 }) => {
+  const u = USERS[uid] || { initials:'?', color:'#888' };
+  return <span className="av" style={{ width:size, height:size, background:u.color+'22', color:u.color, fontSize:size<24?10:11 }}>{u.initials}</span>;
+};
+
+const Pill = ({ variant='', dot=false, children, style }) =>
+  <span className={`pill ${variant}`} style={style}>{dot&&<span className="dot"/>}{children}</span>;
+
+const Prog = ({ pct, color, style }) =>
+  <div className="prog" style={style}><div className="prog-fill" style={{ width:Math.max(0,Math.min(100,pct))+'%', background:color||'var(--accent)' }}/></div>;
+
+/* ══════════════════════════════ SHELL ═════════════════════════════════ */
+const Sidebar = ({ view, setView, userId, setUserId, krs, notifs, savedViews, filters, deleteView, applyView }) => {
+  const [userOpen, setUserOpen] = useState(false);
+  const user = USERS[userId];
+  const myNotifs = notifs.filter(n => n.userId === userId && !n.read);
+  const pendingSignoff = krs.filter(k => k.signOffPersonId === userId && k.approvalState === 'pending-signoff').length;
+  const awaitingApproval = krs.filter(k => k.ownerId === userId && k.approvalState === 'pending-signoff').length;
+  const approvalBadge = pendingSignoff + awaitingApproval;
+  const krBadge = krs.filter(k => k.ownerId === userId && (k.checkinDue || k.systemFlag)).length;
+  const hasActiveFilters = Object.keys(filters).some(k => filters[k] && filters[k] !== 'me' && filters[k] !== 'all');
+
+  return (
+    <aside className="sidebar">
+      <div className="brand"><span className="brand-mark"/><span>Goalpost</span></div>
+
+      {[
+        { v:'home',      icon:'nav-icon rd', label:'Home' },
+        { v:'dashboard', icon:'nav-icon',    label:'My OKRs', badge: krBadge || null },
+        { v:'approvals', icon:'nav-icon',    label:'Approvals', badge: approvalBadge || null },
+      ].map(({v,icon,label,badge}) => (
+        <button key={v} className={`nav-item${view===v?' active':''}`} onClick={()=>setView(v)}>
+          <span className={icon}/>
+          {label}
+          {badge > 0 && <span className="nav-badge">{badge}</span>}
+        </button>
+      ))}
+
+      <div className="nav-section">Q2 · 2026</div>
+      {[
+        { v:'checkins', icon:'nav-icon', label:'Check-ins', badge: krs.filter(k=>k.ownerId===userId&&k.checkinDue).length||null },
+        { v:'archive',  icon:'nav-icon', label:'Archive' },
+      ].map(({v,icon,label,badge}) => (
+        <button key={v} className={`nav-item${view===v?' active':''}`} onClick={()=>setView(v)}>
+          <span className={icon}/>{label}
+          {badge > 0 && <span className="nav-badge">{badge}</span>}
+        </button>
+      ))}
+
+      {/* Saved views */}
+      {savedViews.length > 0 && <>
+        <div className="nav-section">My Views</div>
+        {savedViews.map(sv => (
+          <div key={sv.id} style={{ display:'flex', alignItems:'center', gap:2 }}>
+            <button className={`view-item${hasActiveFilters&&JSON.stringify(filters)===JSON.stringify(sv.filters)?' active':''}`}
+              style={{ flex:1 }} onClick={()=>{ applyView(sv); setView('dashboard'); }}>
+              <span className="view-dot"/>{sv.name}
+            </button>
+            <button className="nav-item" style={{ width:22, padding:0, justifyContent:'center', opacity:.4, flexShrink:0 }}
+              onClick={()=>deleteView(sv.id)} title="Remove view">×</button>
+          </div>
+        ))}
+      </>}
+
+      <div className="nav-sp"/>
+
+      {/* User switcher */}
+      <div className="user-switcher">
+        {userOpen && (
+          <>
+            <div style={{ position:'fixed',inset:0,zIndex:98 }} onClick={()=>setUserOpen(false)}/>
+            <div className="user-menu">
+              <div style={{ padding:'8px 12px 6px', fontSize:10, textTransform:'uppercase', letterSpacing:'.06em', color:'var(--ink-3)' }}>Switch account</div>
+              {Object.values(USERS).map(u => (
+                <button key={u.id} className={`user-menu-item${u.id===userId?' current':''}`}
+                  onClick={()=>{ setUserId(u.id); setUserOpen(false); }}>
+                  <Avatar uid={u.id} size={20}/>{u.name}
+                  <span style={{ marginLeft:'auto', fontSize:10, color:'var(--ink-3)' }}>{u.role}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        )}
+        <button className="user-btn" onClick={()=>setUserOpen(v=>!v)}>
+          <Avatar uid={userId} size={22}/>
+          <div style={{ flex:1, minWidth:0 }}>
+            <div style={{ fontWeight:500, color:'var(--ink)', fontSize:12, overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.name}</div>
+            <div style={{ fontSize:10, color:'var(--ink-3)', overflow:'hidden', textOverflow:'ellipsis', whiteSpace:'nowrap' }}>{user.role}</div>
+          </div>
+          <span style={{ color:'var(--ink-3)', fontSize:9 }}>▲</span>
+        </button>
+      </div>
+    </aside>
+  );
+};
+
+const Topbar = ({ crumbs=[], dark, toggleDark, notifCount, onBell, right, searchQuery, setSearchQuery }) => (
+  <div className="topbar">
+    <div className="crumb">
+      {crumbs.map((c,i) => <React.Fragment key={i}>{i>0&&<span style={{margin:'0 6px',opacity:.4}}>/</span>}{i===crumbs.length-1?<b>{c}</b>:c}</React.Fragment>)}
+    </div>
+    <div className="tb-sp"/>
+    <div className="search-wrap">
+      <span style={{opacity:.5,fontSize:13}}>⌕</span>
+      <input placeholder="Search KRs, objectives, people…" value={searchQuery||''} onChange={e=>setSearchQuery&&setSearchQuery(e.target.value)}/>
+      {searchQuery && <span style={{cursor:'pointer',color:'var(--ink-3)'}} onClick={()=>setSearchQuery&&setSearchQuery('')}>×</span>}
+    </div>
+    {right}
+    <button className="icon-btn" onClick={onBell} title="Notifications">
+      🔔
+      {notifCount > 0 && <span className="badge">{notifCount > 9 ? '9+' : notifCount}</span>}
+    </button>
+    <button className="icon-btn" onClick={toggleDark} title="Toggle dark mode">{dark?'☀':'◑'}</button>
+  </div>
+);
+
+/* ════════════════════════════ NOTIF PANEL ═════════════════════════════ */
+const NotifPanel = ({ notifs, userId, markRead, markAllRead, openKR, close }) => {
+  const mine = notifs.filter(n => n.userId === userId).sort((a,b) => b.ts-a.ts);
+  return (
+    <>
+      <div style={{position:'fixed',inset:0,zIndex:55}} onClick={close}/>
+      <div className="notif-panel fade">
+        <div className="notif-hd">
+          <span style={{fontWeight:600,fontSize:14}}>Notifications</span>
+          <span className="nav-badge">{mine.filter(n=>!n.read).length} new</span>
+          <div style={{flex:1}}/>
+          <button className="btn ghost sm" onClick={markAllRead}>Mark all read</button>
+          <button className="btn ghost sm" onClick={close} style={{padding:'0 6px'}}>×</button>
+        </div>
+        <div className="notif-list">
+          {mine.length === 0 && <div className="empty" style={{padding:'32px 0'}}>All clear ✓</div>}
+          {mine.map(n => (
+            <div key={n.id} className={`notif-item${n.read?'':' unread'}`}
+              onClick={()=>{ markRead(n.id); if(n.krId){ openKR(n.krId); close(); } }}>
+              <div className="notif-icon" style={{background:notifColor(n.type)}}>
+                <span style={{fontSize:12}}>{notifIcon(n.type)}</span>
+              </div>
+              <div style={{flex:1,minWidth:0}}>
+                <div style={{fontSize:12,color:'var(--ink)',fontWeight:n.read?400:500,lineHeight:1.4}}>{n.message}</div>
+                <div style={{fontSize:11,color:'var(--ink-3)',marginTop:3}}>{timeAgo(n.ts)}</div>
+              </div>
+              {!n.read && <span style={{width:6,height:6,borderRadius:'50%',background:'var(--accent)',flexShrink:0,marginTop:6}}/>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ═══════════════════════════════ KR ROW ═══════════════════════════════ */
+const KRRow = ({ kr, userId, onClick, showNeeds=true }) => {
+  const col = statusColor(kr.status);
+  const needsCheckin = kr.checkinDue && kr.ownerId === userId;
+  const needsSignoff = kr.signOffPersonId === userId && kr.approvalState === 'pending-signoff';
+  const hasFlag = showNeeds && (needsCheckin || needsSignoff || kr.systemFlag);
+  const borderCol = needsCheckin ? 'var(--accent)' : needsSignoff ? 'var(--ink-4)' : 'var(--warn)';
+
+  return (
+    <div className={`kr-row${hasFlag?' flagged':''}`}
+      style={hasFlag?{borderLeftColor:borderCol}:{}}
+      onClick={()=>onClick(kr)}>
+      <span className="kr-dot" style={{background:col}}/>
+      <div className="kr-title-wrap">
+        <div className="row" style={{flexWrap:'wrap',gap:6}}>
+          <span style={{fontSize:13,color:'var(--ink)'}}>{kr.title}</span>
+          {showNeeds && needsCheckin && <Pill variant="green" dot>Check-in due</Pill>}
+          {showNeeds && kr.systemFlag && <Pill variant="warn" dot>{kr.systemFlag}</Pill>}
+          {showNeeds && needsSignoff && <Pill dot>Sign-off needed</Pill>}
+          {kr.approvalState === 'pending-signoff' && kr.ownerId === userId && !showNeeds && (
+            <Pill style={{background:'var(--bg-3)',color:'var(--ink-3)'}}>Awaiting sign-off</Pill>
+          )}
+        </div>
+        {showNeeds && needsCheckin && <div className="kr-meta">Last update: {kr.lastCheckin}</div>}
+      </div>
+      <Avatar uid={kr.ownerId} size={22}/>
+      <Prog pct={kr.pct} color={col} style={{width:80}}/>
+      <span style={{fontSize:12,color:'var(--ink-3)',fontVariantNumeric:'tabular-nums',width:32,textAlign:'right'}}>{kr.pct}%</span>
+    </div>
+  );
+};
+
+/* ══════════════════════════════ FILTER BAR ════════════════════════════ */
+const FilterBar = ({ filters, setFilters, krs, userId, savedViews, onSaveView }) => {
+  const tags = allTags(krs);
+  const ownerVal = filters.owner || 'me';
+  const isOwnerAll = ownerVal === 'all';
+  const hasActive = Object.keys(filters).some(k => filters[k] && filters[k] !== 'me' && filters[k] !== 'all');
+
+  const set = (k, v) => setFilters(f => ({ ...f, [k]: v }));
+  const toggle = (k, v) => setFilters(f => ({ ...f, [k]: f[k]===v ? (k==='owner'?'me':'all') : v }));
+
+  const STATUS_OPTS = [['on','On Track'],['risk','At Risk'],['off','Missed']];
+  const PERIOD_OPTS = ['Q1 2026','Q2 2026','Q3 2026','Q4 2026'];
+  const TEAM_OPTS = OBJECTIVES.map(o => [o.id, o.team]);
+
+  return (
+    <div className="filter-bar">
+      <span className="filter-label-sm">Filter</span>
+
+      {/* Owner */}
+      <span className={`chip${isOwnerAll?' on':''}`} onClick={()=>set('owner', isOwnerAll?'me':'all')}>
+        <span className="chip-lbl">Owner</span>
+        <span>{isOwnerAll?'Anyone':'Me'}</span>
+        <span style={{opacity:.55,fontSize:9}}>▾</span>
+      </span>
+
+      {/* Period */}
+      {PERIOD_OPTS.map(p => filters.period===p && (
+        <span key={p} className="chip on" onClick={()=>set('period','all')}>
+          <span className="chip-lbl">Period</span>{p} ×
+        </span>
+      ))}
+      {!filters.period && (
+        <span className="chip" onClick={()=>set('period','Q2 2026')}>
+          <span className="chip-lbl">Period</span>All ▾
+        </span>
+      )}
+
+      {/* Status */}
+      {STATUS_OPTS.map(([v,l]) => filters.status===v ? (
+        <span key={v} className="chip on" onClick={()=>set('status','all')}>
+          <span className="chip-lbl">Status</span>{l} ×
+        </span>
+      ) : null)}
+      {!filters.status && (
+        <div style={{position:'relative',display:'inline-block'}}>
+          <StatusDropdown current={filters.status} onChange={v=>set('status',v)}/>
+        </div>
+      )}
+
+      {/* Tag */}
+      {filters.tag && filters.tag !== 'all' ? (
+        <span className="chip on" onClick={()=>set('tag','all')}>
+          <span className="chip-lbl">Tag</span>{filters.tag} ×
+        </span>
+      ) : (
+        <TagDropdown tags={tags} current={filters.tag} onChange={v=>set('tag',v)}/>
+      )}
+
+      {/* Team */}
+      {filters.team && filters.team !== 'all' ? (
+        <span className="chip on" onClick={()=>set('team','all')}>
+          <span className="chip-lbl">Team</span>{OBJECTIVES.find(o=>o.id===filters.team)?.team||filters.team} ×
+        </span>
+      ) : (
+        <TeamDropdown onChange={v=>set('team',v)}/>
+      )}
+
+      <div style={{flex:1}}/>
+      {hasActive && <>
+        <button className="btn ghost sm" style={{color:'var(--accent-ink)'}} onClick={onSaveView}>Save view ↓</button>
+        <span style={{width:1,height:14,background:'var(--line)'}}/>
+        <button className="btn ghost sm" onClick={()=>setFilters({})}>Reset</button>
+      </>}
+      <span style={{fontSize:11,color:'var(--ink-3)'}}>Sort: <span style={{color:'var(--ink-2)',cursor:'pointer'}}>Objective ▾</span></span>
+    </div>
+  );
+};
+
+const StatusDropdown = ({ current, onChange }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{position:'relative'}}>
+      <span className="chip" onClick={()=>setOpen(v=>!v)}><span className="chip-lbl">Status</span>All ▾</span>
+      {open && <>
+        <div style={{position:'fixed',inset:0,zIndex:10}} onClick={()=>setOpen(false)}/>
+        <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,background:'var(--bg)',border:'1px solid var(--line)',borderRadius:'var(--r-md)',boxShadow:'var(--shadow)',zIndex:20,minWidth:120}}>
+          {[['on','On Track'],['risk','At Risk'],['off','Missed'],['achieved','Achieved'],['deferred','Deferred']].map(([v,l])=>(
+            <div key={v} style={{padding:'8px 14px',cursor:'pointer',fontSize:12,color:'var(--ink-2)'}}
+              onClick={()=>{ onChange(v); setOpen(false); }}
+              onMouseEnter={e=>e.target.style.background='var(--bg-2)'}
+              onMouseLeave={e=>e.target.style.background=''}>{l}</div>
+          ))}
+        </div>
+      </>}
+    </div>
+  );
+};
+
+const TagDropdown = ({ tags, current, onChange }) => {
+  const [open, setOpen] = useState(false);
+  if (!tags.length) return null;
+  return (
+    <div style={{position:'relative'}}>
+      <span className="chip" onClick={()=>setOpen(v=>!v)}><span className="chip-lbl">Tag</span>All ▾</span>
+      {open && <>
+        <div style={{position:'fixed',inset:0,zIndex:10}} onClick={()=>setOpen(false)}/>
+        <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,background:'var(--bg)',border:'1px solid var(--line)',borderRadius:'var(--r-md)',boxShadow:'var(--shadow)',zIndex:20,minWidth:130}}>
+          {tags.map(t=>(
+            <div key={t} style={{padding:'8px 14px',cursor:'pointer',fontSize:12,color:'var(--ink-2)'}}
+              onClick={()=>{ onChange(t); setOpen(false); }}
+              onMouseEnter={e=>e.target.style.background='var(--bg-2)'}
+              onMouseLeave={e=>e.target.style.background=''}>{t}</div>
+          ))}
+        </div>
+      </>}
+    </div>
+  );
+};
+
+const TeamDropdown = ({ onChange }) => {
+  const [open, setOpen] = useState(false);
+  return (
+    <div style={{position:'relative'}}>
+      <span className="chip" onClick={()=>setOpen(v=>!v)}><span className="chip-lbl">Team</span>All ▾</span>
+      {open && <>
+        <div style={{position:'fixed',inset:0,zIndex:10}} onClick={()=>setOpen(false)}/>
+        <div style={{position:'absolute',top:'calc(100% + 4px)',left:0,background:'var(--bg)',border:'1px solid var(--line)',borderRadius:'var(--r-md)',boxShadow:'var(--shadow)',zIndex:20,minWidth:160}}>
+          {OBJECTIVES.map(o=>(
+            <div key={o.id} style={{padding:'8px 14px',cursor:'pointer',fontSize:12,color:'var(--ink-2)'}}
+              onClick={()=>{ onChange(o.id); setOpen(false); }}
+              onMouseEnter={e=>e.target.style.background='var(--bg-2)'}
+              onMouseLeave={e=>e.target.style.background=''}>{o.team}</div>
+          ))}
+        </div>
+      </>}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════ DASHBOARD ════════════════════════════ */
+const Dashboard = ({ krs, filters, setFilters, userId, setView, openKR, savedViews, onSaveView, searchQuery, setSearchQuery, dark, toggleDark }) => {
+  const filtered = useMemo(() => {
+    let r = applyFilters(krs, filters, userId);
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      r = r.filter(k => k.title.toLowerCase().includes(q) || (k.beneficiary||'').toLowerCase().includes(q) || (k.tags||[]).some(t=>t.includes(q)));
+    }
+    return r;
+  }, [krs, filters, userId, searchQuery]);
+
+  const groups = groupByObj(filtered, krs);
+  const ownerLabel = (!filters.owner || filters.owner==='me') ? 'My OKRs' : filters.owner==='all' ? 'All OKRs' : (USERS[filters.owner]?.name||'OKRs');
+  const krCount = filtered.filter(k=>k.approvalState==='active').length;
+  const pending = filtered.filter(k=>k.approvalState==='pending-signoff').length;
+
+  return (
+    <>
+      <Topbar crumbs={['Q2 2026', ownerLabel]} dark={dark} toggleDark={toggleDark}
+        notifCount={0} onBell={()=>{}}
+        searchQuery={searchQuery} setSearchQuery={setSearchQuery}
+        right={<div className="row"><button className="btn" onClick={()=>setView('home')}>Today view →</button><button className="btn primary" onClick={()=>setView('create')}>+ New KR</button></div>}/>
+      <div className="content">
+        <div className="row" style={{marginBottom:4}}>
+          <div><h1 className="h1">{ownerLabel}</h1><p className="sub">{krCount} active · {pending} pending sign-off</p></div>
+        </div>
+        <FilterBar filters={filters} setFilters={setFilters} krs={krs} userId={userId} savedViews={savedViews} onSaveView={onSaveView}/>
+
+        {groups.length === 0 && <div className="empty">{searchQuery ? 'No results for "'+searchQuery+'"' : 'No key results match these filters.'}</div>}
+        {groups.map(g => (
+          <div key={g.id} className="obj-group">
+            <div className="obj-hd">
+              <span className="obj-tag">Objective</span>
+              <span className="obj-title">{g.title}</span>
+              <div className="row" style={{width:190,flexShrink:0}}>
+                <Prog pct={g.pct} style={{flex:1}}/>
+                <span style={{fontSize:12,color:'var(--ink-2)',fontVariantNumeric:'tabular-nums'}}>{g.pct}%</span>
+              </div>
+            </div>
+            <div className="kr-list">
+              {g.krs.map(kr => <KRRow key={kr.id} kr={kr} userId={userId} onClick={openKR} showNeeds/>)}
+            </div>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+};
+
+/* ═══════════════════════════════ TODAY ════════════════════════════════ */
+const Today = ({ krs, userId, setView, openKR, openCheckin, dark, toggleDark, notifCount, onBell }) => {
+  const user = USERS[userId];
+  const myKrs = krs.filter(k => k.ownerId === userId && k.approvalState === 'active');
+  const needsCheckin = myKrs.filter(k => k.checkinDue);
+  const flagged = myKrs.filter(k => !k.checkinDue && k.systemFlag);
+  const pendingSignoff = krs.filter(k => k.signOffPersonId === userId && k.approvalState === 'pending-signoff');
+  const quiet = myKrs.filter(k => !k.checkinDue && !k.systemFlag);
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+  const totalActions = needsCheckin.length + flagged.length + pendingSignoff.length;
+
+  return (
+    <>
+      <Topbar crumbs={['Q2 2026','Home']} dark={dark} toggleDark={toggleDark}
+        notifCount={notifCount} onBell={onBell}
+        right={<button className="btn" onClick={()=>setView('dashboard')}>← All KRs</button>}/>
+      <div className="content">
+        <div className="today-wrap">
+          <h1 className="h1" style={{fontSize:28,marginBottom:4}}>{greeting}, {user.name.split(' ')[0]}.</h1>
+          <p className="sub" style={{fontSize:14,marginBottom:28}}>
+            {totalActions === 0 ? 'Nothing needs you right now. All clear.' : `${totalActions} ${totalActions===1?'thing needs':'things need'} you today.`}
+          </p>
+
+          {needsCheckin.map(kr => (
+            <div key={kr.id} className="action-card ac-green">
+              <div className="row" style={{marginBottom:10}}>
+                <Pill variant="green" dot>Check-in due</Pill>
+                <span style={{color:'var(--ink-3)',fontSize:12}}>last update {kr.lastCheckin}</span>
+              </div>
+              <div style={{fontSize:16,fontWeight:500,marginBottom:4,cursor:'pointer'}} onClick={()=>openKR(kr.id)}>{kr.title}</div>
+              <div style={{color:'var(--ink-3)',fontSize:12,marginBottom:12}}>Current: {kr.displayCurrent} · Target: {kr.displayTarget}</div>
+              <Prog pct={kr.pct} style={{marginBottom:14}}/>
+              <div className="row">
+                <button className="btn primary" onClick={()=>openCheckin(kr.id)}>Update progress →</button>
+                <button className="btn ghost">Snooze 3 days</button>
+              </div>
+            </div>
+          ))}
+
+          {pendingSignoff.map(kr => {
+            const owner = USERS[kr.ownerId];
+            return (
+              <div key={kr.id} className="action-card">
+                <div className="row" style={{marginBottom:10}}>
+                  <Pill dot>Awaiting your sign-off</Pill>
+                  <Avatar uid={kr.ownerId} size={18}/>
+                  <span style={{fontSize:12,color:'var(--ink-2)'}}>{owner?.name}</span>
+                </div>
+                <div style={{fontSize:16,fontWeight:500,marginBottom:4,cursor:'pointer'}} onClick={()=>openKR(kr.id)}>{kr.title}</div>
+                <div style={{color:'var(--ink-3)',fontSize:12,marginBottom:14}}>{owner?.name} listed you as the value recipient</div>
+                <div className="row">
+                  <button className="btn primary" onClick={()=>openKR(kr.id)}>Review & approve</button>
+                  <button className="btn" onClick={()=>openKR(kr.id)}>Request changes</button>
+                </div>
+              </div>
+            );
+          })}
+
+          {flagged.map(kr => (
+            <div key={kr.id} className="action-card ac-warn">
+              <div className="row" style={{marginBottom:10}}>
+                <Pill variant="warn" dot>{kr.systemFlag}</Pill>
+              </div>
+              <div style={{fontSize:16,fontWeight:500,marginBottom:4,cursor:'pointer'}} onClick={()=>openKR(kr.id)}>{kr.title}</div>
+              <div style={{color:'var(--ink-2)',fontSize:12,marginBottom:14}}>
+                65% through Q2 with {kr.pct}% progress. The system thinks this is "At risk". Want to update or note why?
+              </div>
+              <div className="row">
+                <button className="btn" onClick={()=>openCheckin(kr.id)}>Add a note</button>
+                <button className="btn" onClick={()=>openKR(kr.id)}>Change status</button>
+              </div>
+            </div>
+          ))}
+
+          {quiet.length > 0 && <>
+            <div style={{fontSize:11,textTransform:'uppercase',letterSpacing:'.06em',color:'var(--ink-3)',margin:'22px 0 8px'}}>
+              Everything else ({quiet.length})
+            </div>
+            {quiet.map(kr => (
+              <div key={kr.id} className="quiet-item" onClick={()=>openKR(kr.id)}>
+                <span style={{width:7,height:7,borderRadius:'50%',background:statusColor(kr.status),flexShrink:0}}/>
+                <span style={{flex:1,fontSize:13,color:'var(--ink-2)'}}>{kr.title} · {kr.pct}%</span>
+                <span style={{color:'var(--ink-3)',fontSize:11}}>{statusLabel(kr.status)}</span>
+              </div>
+            ))}
+          </>}
+
+          {totalActions === 0 && myKrs.length === 0 && (
+            <div style={{textAlign:'center',padding:'48px 0',color:'var(--ink-3)'}}>
+              No active KRs for this account yet.
+              <br/><button className="btn primary" style={{marginTop:14}} onClick={()=>setView('create')}>Create your first KR</button>
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ══════════════════════════════ APPROVALS ═════════════════════════════ */
+const Approvals = ({ krs, userId, approve, reject, openKR, dark, toggleDark, notifCount, onBell }) => {
+  const [tab, setTab] = useState('needs');
+  const [rejectKrId, setRejectKrId] = useState(null);
+  const [rejectReason, setRejectReason] = useState('');
+
+  const needsSignoff = krs.filter(k => k.signOffPersonId === userId && k.approvalState === 'pending-signoff');
+  const awaiting = krs.filter(k => k.ownerId === userId && k.approvalState === 'pending-signoff');
+
+  const doReject = () => { if (rejectKrId) { reject(rejectKrId, rejectReason); setRejectKrId(null); setRejectReason(''); } };
+
+  const ApprovalCard = ({ kr, showApproveActions }) => {
+    const owner = USERS[kr.ownerId];
+    const signOff = USERS[kr.signOffPersonId];
+    return (
+      <div className="card" style={{padding:'14px 16px',marginBottom:8}}>
+        <div className="row" style={{marginBottom:8}}>
+          <Avatar uid={kr.ownerId} size={28}/>
+          <div style={{flex:1}}>
+            <div style={{fontSize:14,fontWeight:500,cursor:'pointer'}} onClick={()=>openKR(kr.id)}>{kr.title}</div>
+            <div style={{fontSize:11,color:'var(--ink-3)',marginTop:2}}>
+              {owner?.name} · {kr.period} · {kr.objectiveId ? OBJECTIVES.find(o=>o.id===kr.objectiveId)?.team : ''}
+            </div>
+          </div>
+          <Pill variant={pillClass(kr.status)}>{statusLabel(kr.status)}</Pill>
+        </div>
+        <div style={{fontSize:12,color:'var(--ink-2)',marginBottom:8,padding:'8px 10px',background:'var(--bg-2)',borderRadius:'var(--r)'}}>
+          <b>Outcome:</b> {kr.outcome}
+          <br/><b>Beneficiary:</b> {kr.beneficiary}
+        </div>
+        <div className="row">
+          {showApproveActions ? <>
+            <button className="btn primary sm" onClick={()=>approve(kr.id)}>✓ Approve</button>
+            {rejectKrId === kr.id ? (
+              <div className="row" style={{flex:1}}>
+                <input className="inp" style={{flex:1,height:26,fontSize:12}} placeholder="Reason for requesting changes…"
+                  value={rejectReason} onChange={e=>setRejectReason(e.target.value)}
+                  onKeyDown={e=>e.key==='Enter'&&doReject()}/>
+                <button className="btn sm danger" onClick={doReject}>Send</button>
+                <button className="btn ghost sm" onClick={()=>setRejectKrId(null)}>Cancel</button>
+              </div>
+            ) : (
+              <button className="btn sm" onClick={()=>setRejectKrId(kr.id)}>Request changes</button>
+            )}
+          </> : <>
+            <Pill style={{background:'var(--warn-soft)',color:'var(--warn-ink)'}}>
+              Awaiting {signOff?.name}'s sign-off
+            </Pill>
+            <div style={{flex:1}}/>
+            <button className="btn ghost sm" onClick={()=>openKR(kr.id)}>View</button>
+          </>}
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <>
+      <Topbar crumbs={['Q2 2026','Approvals']} dark={dark} toggleDark={toggleDark}
+        notifCount={notifCount} onBell={onBell}/>
+      <div className="content">
+        <h1 className="h1">Approvals</h1>
+        <p className="sub" style={{marginBottom:18}}>{needsSignoff.length} need your sign-off · {awaiting.length} awaiting sign-off on yours</p>
+        <div className="tabs">
+          <div className={`tab${tab==='needs'?' active':''}`} onClick={()=>setTab('needs')}>
+            Needs your sign-off {needsSignoff.length>0&&<span className="nav-badge" style={{marginLeft:6}}>{needsSignoff.length}</span>}
+          </div>
+          <div className={`tab${tab==='awaiting'?' active':''}`} onClick={()=>setTab('awaiting')}>
+            Awaiting sign-off {awaiting.length>0&&<span className="nav-badge" style={{marginLeft:6}}>{awaiting.length}</span>}
+          </div>
+        </div>
+        {tab === 'needs' && (
+          needsSignoff.length === 0
+            ? <div className="empty">Nothing waiting for your sign-off.</div>
+            : needsSignoff.map(kr => <ApprovalCard key={kr.id} kr={kr} showApproveActions/>)
+        )}
+        {tab === 'awaiting' && (
+          awaiting.length === 0
+            ? <div className="empty">None of your KRs are pending sign-off right now.</div>
+            : awaiting.map(kr => <ApprovalCard key={kr.id} kr={kr} showApproveActions={false}/>)
+        )}
+      </div>
+    </>
+  );
+};
+
+/* ══════════════════════════════ CHECK-INS ═════════════════════════════ */
+const Checkins = ({ krs, userId, openKR, openCheckin, dark, toggleDark, notifCount, onBell }) => {
+  const due = krs.filter(k => k.ownerId === userId && k.checkinDue && k.approvalState === 'active');
+  const all = krs.filter(k => k.ownerId === userId && !k.checkinDue && k.approvalState === 'active');
+  return (
+    <>
+      <Topbar crumbs={['Q2 2026','Check-ins']} dark={dark} toggleDark={toggleDark} notifCount={notifCount} onBell={onBell}/>
+      <div className="content">
+        <h1 className="h1">Check-ins</h1>
+        <p className="sub" style={{marginBottom:24}}>Your weekly progress updates</p>
+        {due.length > 0 && <><div className="label">Overdue</div>
+          <div style={{display:'flex',flexDirection:'column',gap:6,marginBottom:24}}>
+            {due.map(kr => <KRRow key={kr.id} kr={kr} userId={userId} onClick={k=>{ openCheckin(k.id); }} showNeeds/>)}
+          </div></>}
+        <div className="label">All active KRs</div>
+        <div style={{display:'flex',flexDirection:'column',gap:6}}>
+          {all.length === 0 && due.length === 0 && <div className="empty">No active KRs this quarter.</div>}
+          {all.map(kr => <KRRow key={kr.id} kr={kr} userId={userId} onClick={k=>openKR(k.id)} showNeeds={false}/>)}
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ══════════════════════════════ CREATE KR ══════════════════════════════ */
+const STEPS = [
+  { q:'What objective or key result does this support?', short:'Parent', hint:'This creates the upward link — your KR will contribute to this parent.' },
+  { q:'Who receives the value when this is achieved?',  short:'Recipient', hint:'Be specific. A named person or team creates real accountability.' },
+  { q:'What does that look like for them?',             short:'Outcome', hint:'Describe a state, not a task. What exists in the world when this is done?' },
+  { q:'How will they confirm it was delivered?',        short:'Sign-off', hint:'The person who confirms value was received — not the owner.' },
+  { q:'By when?',                                       short:'Date', hint:'A specific date is better than "end of Q2".' },
+  { q:'Who owns delivery?',                             short:'Owner', hint:'Defaults to you. You can add co-owners.' },
+];
+
+const CreateKR = ({ userId, krs, setView, createKR, dark, toggleDark, notifCount, onBell }) => {
+  const [mode, setMode] = useState('guided');
+  const [step, setStep] = useState(0);
+  const [answers, setAnswers] = useState(['','','','','','']);
+  const setA = (i, v) => setAnswers(a => { const n=[...a]; n[i]=v; return n; });
+  const inputRef = useRef(null);
+  useEffect(() => { inputRef.current?.focus(); }, [step]);
+
+  const showDetection = step === 2 && (answers[2].includes('→') || answers[2].match(/from .+ to /i) || answers[2].match(/\d+ to \d+/));
+
+  const handleSubmit = () => {
+    const [parentTitle, beneficiary, outcome, signOffName, dueDate, ownerStr] = answers;
+    const parentObj = OBJECTIVES.find(o => o.title.toLowerCase().includes(parentTitle.toLowerCase()));
+    const signOffUser = Object.values(USERS).find(u => u.name.toLowerCase().includes(signOffName.toLowerCase()));
+    const newKr = {
+      id: genId(),
+      objectiveId: parentObj?.id || 'obj-1',
+      title: `${outcome || parentTitle} by ${dueDate || 'Q2 2026'}`,
+      ownerId: userId,
+      signOffPersonId: signOffUser?.id || null,
+      beneficiary: beneficiary || 'Team',
+      outcome: outcome || '',
+      type: showDetection ? 'numeric' : 'binary',
+      unit: null, direction: null,
+      baselineNum: 0, targetNum: 100, currentNum: 0,
+      pct: 0, displayCurrent: '0%', displayBaseline: '0%', displayTarget: dueDate || 'Q2 2026',
+      period: 'Q2 2026', tags: [],
+      status: 'on', approvalState: signOffUser ? 'pending-signoff' : 'active',
+      lastCheckin: 'never', checkinDue: false, systemFlag: null,
+      note: null, statusHistory: [],
+    };
+    createKR(newKr, signOffUser?.id);
+    setView('dashboard');
+  };
+
+  const previewText = () => {
+    const [obj, rec, out,, date, own] = answers;
+    return (
+      <span style={{lineHeight:1.65,color:'var(--ink-2)'}}>
+        {rec && <span>For <b style={{color:'var(--ink)'}}>{rec}</b>, </span>}
+        {obj && <span>supporting <b style={{color:'var(--ink)'}}>&ldquo;{obj}&rdquo;</b>, </span>}
+        {out && <span>the result is: <b style={{color:'var(--ink)'}}>{out}</b></span>}
+        {!obj && !rec && !out && <span style={{color:'var(--ink-4)'}}>Fill in the steps to see your KR take shape…</span>}
+        {date && <span style={{color:'var(--ink-3)'}}>, by {date}</span>}
+        {own && <span style={{color:'var(--ink-3)'}}>, owned by {own}</span>}
+      </span>
+    );
+  };
+
+  return (
+    <>
+      <Topbar crumbs={['Q2 2026','My OKRs','New KR']} dark={dark} toggleDark={toggleDark}
+        notifCount={notifCount} onBell={onBell}
+        right={<div className="mode-tog">
+          {[['guided','Guided'],['expert','Expert']].map(([v,l])=>(
+            <button key={v} className={`mode-btn${mode===v?' on':''}`} onClick={()=>setMode(v)}>{l}</button>
+          ))}
+        </div>}/>
+      {mode === 'guided' ? (
+        <div className="wizard">
+          {/* Rail */}
+          <div className="wizard-rail">
+            <div style={{fontSize:11,color:'var(--ink-3)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:14}}>New Key Result</div>
+            {STEPS.map((s,i) => {
+              const done = i < step, cur = i === step;
+              return (
+                <div key={i} className={`wstep${cur?' active':''}`} onClick={()=>setStep(i)}>
+                  <span className={`wnum${done?' done':cur?' cur':''}`}>{done?'✓':i+1}</span>
+                  <div style={{minWidth:0}}>
+                    <div style={{fontSize:10,color:'var(--ink-3)',textTransform:'uppercase',letterSpacing:'.05em'}}>{s.short}</div>
+                    <div style={{fontSize:12,color:cur?'var(--ink)':'var(--ink-2)',fontWeight:cur?500:400,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap',marginTop:1}}>
+                      {done && answers[i] ? answers[i].slice(0,28)+(answers[i].length>28?'…':'') : (!done&&!cur?'—':'…')}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+            <div style={{borderTop:'1px solid var(--line)',marginTop:18,paddingTop:14,fontSize:11,color:'var(--ink-3)'}}>Auto-saved · just now</div>
+          </div>
+
+          {/* Main */}
+          <div className="wizard-main">
+            <div style={{fontSize:11,color:'var(--accent-ink)',textTransform:'uppercase',letterSpacing:'.08em',marginBottom:8}}>Step {step+1} of {STEPS.length}</div>
+            <h2 style={{fontSize:24,fontWeight:600,margin:'0 0 8px',letterSpacing:'-.4px'}}>{STEPS[step].q}</h2>
+            <p style={{color:'var(--ink-3)',fontSize:13,marginBottom:28}}>{STEPS[step].hint}</p>
+
+            {step === 2 ? (
+              <textarea ref={inputRef} className="ta" style={{fontSize:15,height:60}} placeholder="e.g. Median setup time drops from 18 min to 9 min"
+                value={answers[2]} onChange={e=>setA(2,e.target.value)}/>
+            ) : (
+              <input ref={inputRef} className="inp lg" placeholder={
+                step===0?'e.g. Make first-week experience effortless':
+                step===1?'e.g. New users, Grants team, Ana R.':
+                step===3?'Name of person who will confirm delivery':
+                step===4?'e.g. June 30, Q2 2026':
+                'Defaults to you'
+              }
+                value={answers[step]} onChange={e=>setA(step,e.target.value)}
+                onKeyDown={e=>{ if(e.key==='Enter'&&step<STEPS.length-1) setStep(s=>s+1); }}/>
+            )}
+
+            {showDetection && (
+              <div className="hint green" style={{marginTop:12}}>
+                <span style={{fontFamily:'var(--mono)',color:'var(--accent-ink)',fontSize:11,marginTop:1}}>↳</span>
+                <div style={{fontSize:12,color:'var(--accent-ink)',flex:1}}>Looks like a <b>numeric target</b> — we'll set up baseline → target measurement automatically.</div>
+              </div>
+            )}
+
+            {step === 2 && !showDetection && answers[2].length < 5 && (
+              <div style={{marginTop:14}}>
+                <div className="label">Common shapes</div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {['Reduce X from A to B','Increase X to Y','Stay above X','Ship X by date'].map(s=>(
+                    <span key={s} className="pill" style={{cursor:'pointer'}} onClick={()=>setA(2,s)}>{s}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <div style={{marginTop:12}}>
+                <div className="label">Team members</div>
+                <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>
+                  {Object.values(USERS).map(u=>(
+                    <span key={u.id} className={`pill${answers[3]===u.name?' green':''}`} style={{cursor:'pointer'}}
+                      onClick={()=>setA(3,u.name)}>{u.name}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div style={{flex:1}}/>
+            <div className="row" style={{paddingTop:18,borderTop:'1px solid var(--line)'}}>
+              <button className="btn ghost" onClick={()=>setStep(s=>Math.max(0,s-1))} disabled={step===0}>← Back</button>
+              <div style={{flex:1}}/>
+              {step < STEPS.length-1 && <span style={{fontSize:11,color:'var(--ink-3)'}}>Enter to continue</span>}
+              {step < STEPS.length-1
+                ? <button className="btn primary" onClick={()=>setStep(s=>s+1)}>Continue →</button>
+                : <button className="btn primary" onClick={handleSubmit}>Send for review →</button>}
+            </div>
+          </div>
+
+          {/* Preview */}
+          <div className="wizard-preview">
+            <div className="label">Preview</div>
+            <div style={{fontSize:13}}>{previewText()}</div>
+            <div className="divider"/>
+            <div className="label">Then</div>
+            {['Sign-off person notified','Manager approval','→ Active'].map(l=>(
+              <div key={l} className="row" style={{gap:8,color:'var(--ink-3)',marginBottom:6,fontSize:12}}>
+                <span style={{width:6,height:6,borderRadius:'50%',background:'var(--ink-4)',flexShrink:0}}/>
+                {l}
+              </div>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <ExpertForm userId={userId} setView={setView} createKR={createKR}/>
+      )}
+    </>
+  );
+};
+
+const ExpertForm = ({ userId, setView, createKR }) => {
+  const [title, setTitle] = useState('');
+  const [beneficiary, setBeneficiary] = useState('');
+  const [outcome, setOutcome] = useState('');
+  const [signOffId, setSignOffId] = useState('');
+  const [period] = useState('Q2 2026');
+  const [objectiveId, setObjectiveId] = useState('obj-1');
+  const [tags, setTags] = useState('');
+
+  const handleSubmit = () => {
+    if (!title) return;
+    const newKr = {
+      id:genId(), objectiveId, title,
+      ownerId:userId, signOffPersonId:signOffId||null,
+      beneficiary, outcome, type:'binary', unit:null, direction:null,
+      baselineNum:0, targetNum:100, currentNum:0,
+      pct:0, displayCurrent:'Not started', displayBaseline:'0%', displayTarget:'Completed',
+      period, tags: tags.split(',').map(t=>t.trim()).filter(Boolean),
+      status:'on', approvalState:signOffId?'pending-signoff':'active',
+      lastCheckin:'never', checkinDue:false, systemFlag:null,
+      note:null, statusHistory:[],
+    };
+    createKR(newKr, signOffId||null);
+    setView('dashboard');
+  };
+
+  return (
+    <div className="content" style={{maxWidth:860,margin:'0 auto'}}>
+      <div style={{display:'grid',gridTemplateColumns:'1fr 230px',gap:22,alignItems:'start'}}>
+        <div>
+          <div className="label" style={{marginBottom:4}}>Draft KR · Expert mode</div>
+          <input className="inp" style={{height:44,fontSize:18,fontWeight:600,border:'none',borderBottom:'1px solid var(--line)',borderRadius:0,marginBottom:22}}
+            placeholder="Key result title…" value={title} onChange={e=>setTitle(e.target.value)}/>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(12,1fr)',gap:12}}>
+            <div style={{gridColumn:'span 12'}}>
+              <label className="label">Parent objective</label>
+              <select className="inp" value={objectiveId} onChange={e=>setObjectiveId(e.target.value)}>
+                {OBJECTIVES.map(o=><option key={o.id} value={o.id}>{o.title}</option>)}
+              </select>
+            </div>
+            <div style={{gridColumn:'span 6'}}><label className="label">Beneficiary</label><input className="inp" placeholder="Who receives the value?" value={beneficiary} onChange={e=>setBeneficiary(e.target.value)}/></div>
+            <div style={{gridColumn:'span 6'}}><label className="label">Sign-off person</label>
+              <select className="inp" value={signOffId} onChange={e=>setSignOffId(e.target.value)}>
+                <option value="">— select —</option>
+                {Object.values(USERS).filter(u=>u.id!==userId).map(u=><option key={u.id} value={u.id}>{u.name} · {u.role}</option>)}
+              </select>
+            </div>
+            <div style={{gridColumn:'span 12'}}><label className="label">Outcome (from beneficiary perspective)</label><textarea className="ta" style={{height:56}} placeholder="What does success look like for them?" value={outcome} onChange={e=>setOutcome(e.target.value)}/></div>
+            <div style={{gridColumn:'span 6'}}><label className="label">Period</label><input className="inp" value={period} readOnly/></div>
+            <div style={{gridColumn:'span 6'}}><label className="label">Tags (comma-separated)</label><input className="inp" placeholder="e.g. onboarding, q2" value={tags} onChange={e=>setTags(e.target.value)}/></div>
+          </div>
+          <div className="row" style={{marginTop:22}}>
+            <button className="btn ghost" onClick={()=>setView('dashboard')}>Discard</button>
+            <div style={{flex:1}}/>
+            <button className="btn primary" onClick={handleSubmit}>Send for review →</button>
+          </div>
+        </div>
+        <div style={{paddingTop:28}}>
+          <div className="card" style={{padding:14,background:'var(--bg-2)'}}>
+            <div className="label">Workflow</div>
+            {['Draft','Sign-off','Manager','Active'].map((s,i)=>(
+              <div key={s} className="row" style={{gap:8,color:i===0?'var(--accent-ink)':'var(--ink-3)',marginBottom:6,fontSize:12}}>
+                <span style={{width:6,height:6,borderRadius:'50%',background:i===0?'var(--accent)':'var(--ink-4)'}}/>
+                {s}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ══════════════════════════════ KR DRAWER ═════════════════════════════ */
+const KRDrawer = ({ kr, userId, onClose, openCheckin, approve, reject }) => {
+  const [rejectOpen, setRejectOpen] = useState(false);
+  const [rejectReason, setRejectReason] = useState('');
+  if (!kr) return null;
+  const col = statusColor(kr.status);
+  const canSignOff = kr.signOffPersonId === userId && kr.approvalState === 'pending-signoff';
+  const isOwner = kr.ownerId === userId;
+
+  return (
+    <>
+      <div className="overlay fade" onClick={onClose}/>
+      <div className="drawer fade">
+        <div className="drawer-hd" style={{position:'relative'}}>
+          <button className="drawer-close" onClick={onClose}>×</button>
+          <div className="row" style={{marginBottom:10,flexWrap:'wrap',gap:6}}>
+            <Pill variant={pillClass(kr.status)}>{statusLabel(kr.status)}</Pill>
+            {kr.systemFlag && <Pill variant="warn" dot>{kr.systemFlag}</Pill>}
+            {kr.approvalState === 'pending-signoff' && <Pill style={{background:'var(--warn-soft)',color:'var(--warn-ink)'}} dot>Awaiting sign-off</Pill>}
+          </div>
+          <div style={{fontSize:17,fontWeight:600,letterSpacing:'-.3px',lineHeight:1.3,paddingRight:36,marginBottom:12}}>{kr.title}</div>
+          <div className="row">
+            {isOwner && kr.approvalState === 'active' && <button className="btn sm primary" onClick={()=>{onClose();openCheckin(kr.id);}}>Check in →</button>}
+            {canSignOff && <>
+              <button className="btn sm primary" onClick={()=>{ approve(kr.id); onClose(); }}>✓ Approve</button>
+              <button className="btn sm" onClick={()=>setRejectOpen(v=>!v)}>Request changes</button>
+            </>}
+            <button className="btn sm ghost">Edit</button>
+          </div>
+          {canSignOff && rejectOpen && (
+            <div style={{marginTop:10}}>
+              <input className="inp" style={{marginBottom:6}} placeholder="What needs to change?" value={rejectReason} onChange={e=>setRejectReason(e.target.value)}/>
+              <div className="row">
+                <button className="btn sm danger" onClick={()=>{ reject(kr.id, rejectReason); onClose(); }}>Send feedback</button>
+                <button className="btn ghost sm" onClick={()=>setRejectOpen(false)}>Cancel</button>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="drawer-body" style={{display:'flex',flexDirection:'column',gap:18}}>
+          {/* Progress */}
+          <div>
+            <div className="row" style={{marginBottom:6}}>
+              <span className="label" style={{margin:0}}>Progress</span>
+              <span style={{fontSize:14,fontWeight:600,color:col,fontVariantNumeric:'tabular-nums',marginLeft:'auto'}}>{kr.pct}%</span>
+            </div>
+            <Prog pct={kr.pct} color={col} style={{height:6,borderRadius:4}}/>
+            <div className="row" style={{marginTop:6,fontSize:11,color:'var(--ink-3)'}}>
+              <span>Baseline: {kr.displayBaseline}</span>
+              <span style={{flex:1,textAlign:'center'}}>Current: <b style={{color:'var(--ink-2)'}}>{kr.displayCurrent}</b></span>
+              <span>Target: {kr.displayTarget}</span>
+            </div>
+          </div>
+          {/* Meta */}
+          <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:14}}>
+            {[['Beneficiary',kr.beneficiary],['Sign-off person',USERS[kr.signOffPersonId]?.name||'—'],['Owner',USERS[kr.ownerId]?.name||'—'],['Period',kr.period],['Type',kr.type],['Last check-in',kr.lastCheckin]].map(([l,v])=>(
+              <div key={l} className="stat-block"><span className="stat-lbl">{l}</span><span className="stat-val">{v}</span></div>
+            ))}
+          </div>
+          {/* Outcome */}
+          {kr.outcome && <div>
+            <span className="label">Outcome</span>
+            <div style={{fontSize:13,color:'var(--ink-2)',lineHeight:1.5,padding:'8px 10px',background:'var(--bg-2)',borderRadius:'var(--r)'}}>{kr.outcome}</div>
+          </div>}
+          {/* Tags */}
+          <div>
+            <span className="label">Tags</span>
+            <div className="row" style={{flexWrap:'wrap',gap:6}}>
+              {(kr.tags||[]).map(t=><Pill key={t} variant="green">{t}</Pill>)}
+              {!(kr.tags||[]).length && <span style={{color:'var(--ink-3)',fontSize:12}}>No tags</span>}
+            </div>
+          </div>
+          {/* Note */}
+          {kr.note && <div>
+            <span className="label">Latest note</span>
+            <div style={{fontSize:12,color:'var(--ink-2)',padding:'8px 10px',background:'var(--bg-2)',borderRadius:'var(--r)',fontStyle:'italic'}}>"{kr.note}"</div>
+          </div>}
+          {/* History */}
+          <div>
+            <span className="label">Status history</span>
+            {!(kr.statusHistory||[]).length && <div style={{color:'var(--ink-3)',fontSize:12}}>No history yet.</div>}
+            {(kr.statusHistory||[]).map((h,i)=>(
+              <div key={i} className="row" style={{gap:10,fontSize:12,marginBottom:8}}>
+                <span style={{color:'var(--ink-3)',width:46,flexShrink:0}}>{h.date}</span>
+                <span style={{width:8,height:8,borderRadius:'50%',background:statusColor(h.status),flexShrink:0}}/>
+                <span style={{color:'var(--ink-2)'}}>{h.note}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ════════════════════════════ CHECKIN DRAWER ══════════════════════════ */
+const CheckinDrawer = ({ kr, userId, onClose, postCheckin }) => {
+  const [rawVal, setRawVal] = useState('');
+  const [statusChoice, setStatusChoice] = useState(kr?.status || 'on');
+  const [note, setNote] = useState('');
+  useEffect(() => { if(kr){ setRawVal(kr.displayCurrent||''); setStatusChoice(kr.status); setNote(''); } }, [kr?.id]);
+  if (!kr) return null;
+
+  const numVal = parseFloat(rawVal.replace(/[^0-9.]/g,''));
+  const autoPct = !isNaN(numVal) ? calcPct(kr, numVal) : kr.pct;
+  const isLagging = kr.pct < 50;
+
+  const doPost = () => {
+    const today = new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+    postCheckin(kr.id, {
+      currentDisplay: rawVal,
+      currentNum: isNaN(numVal) ? kr.currentNum : numVal,
+      pct: autoPct,
+      status: statusChoice,
+      note,
+      historyEntry: { date: today, status: statusChoice, note: note || statusLabel(statusChoice) }
+    });
+    onClose();
+  };
+
+  return (
+    <>
+      <div style={{position:'absolute',inset:0,background:'rgba(20,24,26,.15)',zIndex:10}} onClick={onClose}/>
+      <div style={{position:'absolute',top:0,right:0,bottom:0,width:440,maxWidth:'92%',background:'var(--bg)',borderLeft:'1px solid var(--line)',padding:'22px 24px',display:'flex',flexDirection:'column',gap:15,overflow:'auto',zIndex:11}} className="fade">
+        <div className="row">
+          <span style={{fontSize:11,color:'var(--ink-3)',textTransform:'uppercase',letterSpacing:'.08em'}}>Weekly check-in</span>
+          <div style={{flex:1}}/>
+          <button onClick={onClose} style={{background:'none',border:'none',fontSize:18,color:'var(--ink-3)',lineHeight:1,cursor:'pointer'}}>×</button>
+        </div>
+        <div style={{background:'var(--bg-2)',padding:'10px 12px',borderRadius:'var(--r)',fontSize:12,color:'var(--ink-3)'}}>
+          <span style={{color:'var(--ink-2)',fontWeight:500}}>{kr.title}</span>
+          <span style={{marginLeft:6}}>· {kr.pct}% there</span>
+        </div>
+
+        {/* Q1 */}
+        <div>
+          <div style={{fontSize:13,color:'var(--ink-2)',marginBottom:8,fontWeight:500}}>1 · What's the current value?</div>
+          <div style={{display:'flex',alignItems:'baseline',gap:8,padding:'10px 14px',border:'1px solid var(--accent)',borderRadius:'var(--r)',background:'var(--accent-soft)'}}>
+            <input value={rawVal} onChange={e=>setRawVal(e.target.value)}
+              style={{fontSize:22,fontWeight:600,color:'var(--accent-ink)',fontVariantNumeric:'tabular-nums',background:'transparent',border:'none',outline:'none',width:120,fontFamily:'inherit'}}/>
+            <div style={{flex:1}}/>
+            <span style={{fontSize:11,color:'var(--accent-ink)'}}>baseline {kr.displayBaseline} → target {kr.displayTarget}</span>
+          </div>
+          {!isNaN(numVal) && autoPct !== kr.pct && (
+            <div style={{fontSize:11,color:'var(--accent-ink)',marginTop:5}}>Auto-calculated: {autoPct}% complete</div>
+          )}
+        </div>
+
+        {/* Chart */}
+        <div style={{background:'var(--bg-2)',padding:'12px 14px',borderRadius:'var(--r)'}}>
+          <div className="row" style={{marginBottom:8,fontSize:11,color:'var(--ink-3)'}}>
+            <span>Apr 1</span><span style={{color:'var(--ink-2)',fontWeight:500,flex:1,textAlign:'center'}}>Today · 65% of Q2</span><span>Jun 30</span>
+          </div>
+          <svg viewBox="0 0 400 70" style={{width:'100%',height:70}} preserveAspectRatio="none">
+            <line x1="0" y1="18" x2="400" y2="18" stroke="var(--accent)" strokeWidth="1" strokeDasharray="3 3" opacity=".55"/>
+            <line x1="0" y1="58" x2="400" y2="18" stroke="var(--ink-4)" strokeWidth="1" strokeDasharray="2 4"/>
+            <polyline fill="none" stroke="var(--ink)" strokeWidth="1.8" points="0,58 50,55 100,52 150,48 200,45 240,43 265,42"/>
+            <circle cx="265" cy="42" r="4" fill={isLagging?'var(--warn)':'var(--accent)'} stroke="var(--bg)" strokeWidth="1.5"/>
+            <text x="398" y="14" fontSize="9" fill="var(--accent-ink)" textAnchor="end">target</text>
+            <text x="398" y="68" fontSize="9" fill="var(--ink-3)" textAnchor="end">expected pace</text>
+          </svg>
+        </div>
+
+        {isLagging && (
+          <div className="hint warn">
+            <span style={{fontFamily:'var(--mono)',color:'var(--warn)',fontSize:12,marginTop:1}}>!</span>
+            <div style={{fontSize:12,color:'var(--ink-2)',flex:1}}>
+              <div style={{fontWeight:600,color:'var(--warn)',marginBottom:2}}>Behind the pace</div>
+              65% through Q2 with {kr.pct}% progress. The system thinks this is At risk.
+            </div>
+          </div>
+        )}
+
+        {/* Q2 */}
+        <div>
+          <div style={{fontSize:13,color:'var(--ink-2)',marginBottom:8,fontWeight:500}}>2 · How does it feel?</div>
+          <div className="status-grid">
+            {[['on','On track','green'],['risk','At risk','risk'],['off','Behind','off']].map(([v,l,cls])=>(
+              <div key={v} className={`status-opt${statusChoice===v?' sel '+cls:''}`} onClick={()=>setStatusChoice(v)}>{l}</div>
+            ))}
+          </div>
+          {statusChoice === 'on' && isLagging && (
+            <div style={{fontSize:11,color:'var(--warn)',marginTop:6}}>⚠ System disagrees — add a note to explain.</div>
+          )}
+        </div>
+
+        {/* Q3 */}
+        <div>
+          <div style={{fontSize:13,color:'var(--ink-2)',marginBottom:8,fontWeight:500}}>
+            3 · Anything {USERS[kr.signOffPersonId]?.name?.split(' ')[0] || 'your sign-off person'} should know?
+          </div>
+          <textarea className="ta" style={{minHeight:60}} placeholder="Blockers, context, what's changing…" value={note} onChange={e=>setNote(e.target.value)}/>
+        </div>
+
+        <div style={{flex:1}}/>
+        <div className="row">
+          <button className="btn ghost" onClick={onClose}>Skip</button>
+          <div style={{flex:1}}/>
+          <button className="btn primary" onClick={doPost}>Post update</button>
+        </div>
+      </div>
+    </>
+  );
+};
+
+/* ══════════════════════════════ SAVE VIEW MODAL ════════════════════════ */
+const SaveViewModal = ({ onClose, onSave }) => {
+  const [name, setName] = useState('');
+  const ref = useRef(null);
+  useEffect(()=>ref.current?.focus(),[]);
+  return (
+    <div className="modal-overlay fade" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <div style={{fontWeight:600,fontSize:16,marginBottom:4}}>Save this view</div>
+        <div style={{color:'var(--ink-3)',fontSize:13,marginBottom:18}}>Give it a name so you can return to it from the sidebar.</div>
+        <input ref={ref} className="inp" placeholder="e.g. At risk this quarter" value={name} onChange={e=>setName(e.target.value)}
+          onKeyDown={e=>{ if(e.key==='Enter'&&name.trim()) onSave(name.trim()); if(e.key==='Escape') onClose(); }}/>
+        <div className="row" style={{marginTop:14}}>
+          <button className="btn ghost" onClick={onClose}>Cancel</button>
+          <div style={{flex:1}}/>
+          <button className="btn primary" disabled={!name.trim()} onClick={()=>onSave(name.trim())}>Save view</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ════════════════════════════════ ARCHIVE ═════════════════════════════ */
+const Archive = ({ dark, toggleDark, notifCount, onBell }) => (
+  <>
+    <Topbar crumbs={['Q2 2026','Archive']} dark={dark} toggleDark={toggleDark} notifCount={notifCount} onBell={onBell}/>
+    <div className="content"><div className="empty" style={{paddingTop:64}}>Archive coming soon.<br/><span style={{fontSize:12}}>Missed and deferred KRs from previous quarters will appear here.</span></div></div>
+  </>
+);
+
+/* ═════════════════════════════════ APP ════════════════════════════════ */
+const App = () => {
+  const [userId, setUserId]       = useLocalStorage('gp_userId', 'jamie');
+  const [krs, setKrs]             = useLocalStorage('gp_krs', INITIAL_KRS);
+  const [notifs, setNotifs]       = useLocalStorage('gp_notifs', INITIAL_NOTIFS);
+  const [savedViews, setSavedViews] = useLocalStorage('gp_views', INITIAL_SAVED_VIEWS);
+  const [filters, setFilters]     = useLocalStorage('gp_filters', {});
+  const [dark, setDark]           = useLocalStorage('gp_dark', false);
+
+  const [view, setView]       = useState('home');
+  const [activeKRId, setActiveKRId]   = useState(null);
+  const [checkinKRId, setCheckinKRId] = useState(null);
+  const [notifOpen, setNotifOpen]     = useState(false);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  }, [dark]);
+
+  const user = USERS[userId];
+  const myNotifs = notifs.filter(n => n.userId === userId);
+  const unread = myNotifs.filter(n => !n.read).length;
+
+  const activeKR = activeKRId ? krs.find(k => k.id === activeKRId) : null;
+  const checkinKR = checkinKRId ? krs.find(k => k.id === checkinKRId) : null;
+
+  /* ── Actions ── */
+  const addNotif = (toUserId, type, message, krId=null) => {
+    const n = { id:genId(), userId:toUserId, type, message, krId, ts:Date.now(), read:false };
+    setNotifs(prev => [n, ...prev]);
+  };
+
+  const approve = (krId) => {
+    const kr = krs.find(k => k.id === krId);
+    setKrs(prev => prev.map(k => k.id===krId ? { ...k, approvalState:'active', checkinDue:false } : k));
+    if (kr) addNotif(kr.ownerId, 'approved', `${user.name} approved "${kr.title}" — it's now active.`, krId);
+  };
+
+  const reject = (krId, reason) => {
+    const kr = krs.find(k => k.id === krId);
+    setKrs(prev => prev.map(k => k.id===krId ? { ...k, approvalState:'draft' } : k));
+    if (kr) addNotif(kr.ownerId, 'rejected', `${user.name} requested changes on "${kr.title}"${reason?': '+reason:'.'}.`, krId);
+  };
+
+  const postCheckin = (krId, { currentDisplay, currentNum, pct, status, note, historyEntry }) => {
+    const kr = krs.find(k => k.id === krId);
+    setKrs(prev => prev.map(k => k.id===krId ? {
+      ...k,
+      displayCurrent: currentDisplay || k.displayCurrent,
+      currentNum: currentNum ?? k.currentNum,
+      pct: Math.min(100, Math.max(0, pct)),
+      status, lastCheckin: 'just now', checkinDue: false,
+      note: note || k.note,
+      systemFlag: status === 'risk' ? k.systemFlag : null,
+      statusHistory: [historyEntry, ...(k.statusHistory||[])].slice(0,10),
+    } : k));
+    if (kr && kr.signOffPersonId && kr.signOffPersonId !== userId) {
+      addNotif(kr.signOffPersonId, 'checkin', `${user.name} posted a check-in on "${kr.title}"`, krId);
+    }
+  };
+
+  const createKR = (newKr, signOffId) => {
+    setKrs(prev => [...prev, newKr]);
+    if (signOffId && signOffId !== userId) {
+      addNotif(signOffId, 'signoff_request', `${user.name} listed you as value recipient for "${newKr.title}"`, newKr.id);
+    }
+  };
+
+  const markRead = (id) => setNotifs(prev => prev.map(n => n.id===id ? { ...n, read:true } : n));
+  const markAllRead = () => setNotifs(prev => prev.map(n => n.userId===userId ? { ...n, read:true } : n));
+
+  const saveView = (name) => {
+    setSavedViews(prev => [...prev, { id:genId(), name, filters:{ ...filters } }]);
+    setSaveModalOpen(false);
+  };
+  const deleteView = (id) => setSavedViews(prev => prev.filter(v => v.id !== id));
+  const applyView = (sv) => setFilters(sv.filters);
+
+  const openKR = (id) => { setActiveKRId(id); setCheckinKRId(null); setNotifOpen(false); };
+  const openCheckin = (id) => { setCheckinKRId(id); setActiveKRId(null); };
+  const closeAll = () => { setActiveKRId(null); setCheckinKRId(null); };
+  const toggleDark = () => setDark(d => !d);
+
+  const sharedProps = { dark, toggleDark, notifCount:unread, onBell:()=>setNotifOpen(v=>!v) };
+
+  /* ── View render ── */
+  const renderView = () => {
+    switch(view) {
+      case 'home': return <Today krs={krs} userId={userId} setView={setView} openKR={id=>openKR(id)} openCheckin={id=>openCheckin(id)} {...sharedProps}/>;
+      case 'dashboard': return <Dashboard krs={krs} filters={filters} setFilters={setFilters} userId={userId} setView={setView} openKR={kr=>openKR(kr.id)} savedViews={savedViews} onSaveView={()=>setSaveModalOpen(true)} searchQuery={searchQuery} setSearchQuery={setSearchQuery} {...sharedProps}/>;
+      case 'approvals': return <Approvals krs={krs} userId={userId} approve={approve} reject={reject} openKR={id=>openKR(id)} {...sharedProps}/>;
+      case 'checkins': return <Checkins krs={krs} userId={userId} openKR={id=>openKR(id)} openCheckin={id=>openCheckin(id)} {...sharedProps}/>;
+      case 'create': return <CreateKR userId={userId} krs={krs} setView={setView} createKR={createKR} {...sharedProps}/>;
+      case 'archive': return <Archive {...sharedProps}/>;
+      default: return <Today krs={krs} userId={userId} setView={setView} openKR={id=>openKR(id)} openCheckin={id=>openCheckin(id)} {...sharedProps}/>;
+    }
+  };
+
+  return (
+    <div className="app">
+      <Sidebar view={view} setView={(v)=>{ setView(v); closeAll(); setNotifOpen(false); }}
+        userId={userId} setUserId={(id)=>{ setUserId(id); setView('home'); closeAll(); setNotifOpen(false); }}
+        krs={krs} notifs={notifs} savedViews={savedViews}
+        filters={filters} deleteView={deleteView} applyView={applyView}/>
+
+      <div className="main" style={{position:'relative'}}>
+        {renderView()}
+
+        {/* Check-in overlay */}
+        {checkinKR && !activeKR && (
+          <div style={{position:'absolute',inset:0,zIndex:20}}>
+            <CheckinDrawer kr={checkinKR} userId={userId} onClose={()=>setCheckinKRId(null)} postCheckin={postCheckin}/>
+          </div>
+        )}
+      </div>
+
+      {/* KR Detail Drawer */}
+      {activeKR && (
+        <KRDrawer kr={activeKR} userId={userId} onClose={closeAll}
+          openCheckin={id=>{ setActiveKRId(null); openCheckin(id); }}
+          approve={approve} reject={reject}/>
+      )}
+
+      {/* Notification panel */}
+      {notifOpen && (
+        <NotifPanel notifs={notifs} userId={userId}
+          markRead={markRead} markAllRead={markAllRead}
+          openKR={id=>{ openKR(id); setNotifOpen(false); }}
+          close={()=>setNotifOpen(false)}/>
+      )}
+
+      {/* Save view modal */}
+      {saveModalOpen && <SaveViewModal onClose={()=>setSaveModalOpen(false)} onSave={saveView}/>}
+    </div>
+  );
+};
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body>
+</html>
